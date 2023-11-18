@@ -50,4 +50,11 @@ nav ul li a {
     line-height: 1.6;
 }
 
+.content img {
+    max-width: 100%; /* ensures image is not wider than its container */
+    height: auto; /* maintains aspect ratio */
+    display: block; /* removes extra space below the image */
+    margin: 0 auto; /* centers image */
+}
+
 /* Add more styling as needed */
