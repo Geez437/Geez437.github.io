@@ -1,14 +1,20 @@
-function setupPopupEventHandlers() {
-    // Close popup when clicking outside of the video
-    window.onclick = closePopupOnClick;
-    window.ontouchstart = closePopupOnClick; // Handle touch events for mobile devices
+function openPopup(videoId) {
+    // Close any already open popups
+    var popups = document.getElementsByClassName('popup');
+    for (var i = 0; i < popups.length; i++) {
+        popups[i].style.display = 'none';
+    }
+
+    // Open the requested popup
+    var popup = document.getElementById(videoId);
+    if (popup) {
+        popup.style.display = 'flex'; // Use flex to center the video
+    }
 }
 
-function closePopupOnClick(event) {
+// Close popup when clicking outside of the video
+window.onclick = function(event) {
     if (event.target.classList.contains('popup')) {
         event.target.style.display = 'none';
     }
 }
-
-// Call this function when the page loads
-setupPopupEventHandlers();
