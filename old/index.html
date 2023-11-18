@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monatlicher Ausgabenverfolger</title>
+    <style>
+		body {
+			font-family: Arial, sans-serif;
+			margin: 0;
+			padding: 0;
+		}
+
+		h1 {
+			text-align: center;
+			font-size: 1.5rem;
+			padding: 1rem;
+		}
+
+		form, .filter-container {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+			margin-bottom: 20px;
+		}
+
+		form > *:not(:last-child), .filter-container > *:not(:last-child) {
+			margin-right: 10px;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		th, td {
+			border: 1px solid #ccc;
+			padding: 10px;
+			text-align: left;
+		}
+
+		th {
+			background-color: #f2f2f2;
+		}
+
+		@media (max-width: 480px) {
+			h1 {
+				font-size: 1.2rem;
+				padding: 0.5rem;
+			}
+
+			th, td {
+				font-size: 0.9rem;
+				padding: 5px;
+			}
+
+			form > *:not(:last-child), .filter-container > *:not(:last-child) {
+				margin-right: 5px;
+			}
+		}
+	</style>
+
+
+</head>
+<body>
+    <h1>Monatlicher Ausgabenverfolger</h1>
+    <form>
+		<label for="expense">Ausgabe:</label>
+		<input type="text" id="expense" required>
+		<label for="amount">Betrag:</label>
+		<input type="number" id="amount" step="0.01" required>
+		<label for="category">Bezahlt von:</label>
+		<select id="category">
+			<option value="Lilops">Lilops</option>
+			<option value="Maxi">Maxi</option>
+		</select>
+		<label for="month">Monat:</label>
+		<input type="month" id="month" required>
+		<button id="add-expense">Ausgabe hinzufügen</button>
+	</form>
+	<div>
+		<label for="filter-month">Nach Monat filtern</label>
+		<input type="month" id="filter-month">
+		<button id="apply-filter">Filter anwenden</button>
+		<button id="clear-filter">Filter löschen</button>
+	</div>
+    <table>
+        <thead>
+			<tr>
+				<th>Ausgabe</th>
+				<th>Betrag</th>
+				<th>Bezahlt von</th>
+				<th>Monat</th>
+				<th>Aktion</th>
+			</tr>
+		</thead>
+        <tbody id="expense-list"></tbody>
+		<tfoot>
+			<tr>
+				<th>Lilops:</th>
+				<th id="total-lilops" colspan="3">0.00€</th>
+			</tr>
+			<tr>
+				<th>Maxi:</th>
+				<th id="total-maxi" colspan="3">0.00€</th>
+			</tr>
+		</tfoot>
+    </table>
+	
+	<button id="export-expenses">Ausgaben speichern</button>
+	<button id="import-expenses">Ausgaben laden</button>
+	<input type="file" id="import-file" accept="application/json" style="display:none">
+
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+			loadExpenses();
+			document.getElementById("month").value = getCurrentMonth();
+		});
+
+		document.getElementById("add-expense").addEventListener("click", function(event) {
+			event.preventDefault();
+
+			const expense = document.getElementById("expense").value;
+			const amount = document.getElementById("amount").value;
+			const category = document.getElementById("category").value;
+			const month = document.getElementById("month").value;
+
+			if (!expense || !amount || !category || !month) {
+				alert("Please fill in all fields");
+				return;
+			}
+
+			saveExpense(expense, amount, category, month);
+			loadExpenses();
+
+			document.getElementById("expense").value = "";
+			document.getElementById("amount").value = "";
+		});
+
+		document.getElementById("apply-filter").addEventListener("click", function(event) {
+			event.preventDefault();
+			loadExpenses();
+		});
+
+		document.getElementById("clear-filter").addEventListener("click", function(event) {
+			event.preventDefault();
+			document.getElementById("filter-month").value = "";
+			loadExpenses();
+		});
+		
+		document.getElementById("export-expenses").addEventListener("click", function() {
+		  exportExpenses();
+		});
+
+		document.getElementById("import-expenses").addEventListener("click", function() {
+		  document.getElementById("import-file").click();
+		});
+
+		document.getElementById("import-file").addEventListener("change", function() {
+		  const file = this.files[0];
+		  if (file) {
+			importExpenses(file);
+		  }
+		});
+
+
+		function createExpenseRow(expense, amount, category, month, index) {
+			const newRow = document.createElement("tr");
+			newRow.innerHTML = `
+				<td>${expense}</td>
+				<td>${amount}€</td>
+				<td>${category}</td>
+				<td>${month}</td>
+				<td><button class="delete-expense" data-index="${index}">Löschen</button></td>
+			`;
+			newRow.querySelector(".delete-expense").addEventListener("click", function() {
+				deleteExpense(index);
+				newRow.remove();
+				updateTotals();
+			});
+			return newRow;
+		}
+
+		function saveExpense(expense, amount, category, month) {
+			const expenses = getStoredExpenses();
+			expenses.push({ expense, amount, category, month });
+			localStorage.setItem("expenses", JSON.stringify(expenses));
+		}
+
+		function getStoredExpenses() {
+			const storedExpenses = localStorage.getItem("expenses");
+			return storedExpenses ? JSON.parse(storedExpenses) : [];
+		}
+
+		function deleteExpense(index) {
+			const expenses = getStoredExpenses();
+			expenses.splice(index, 1);
+			localStorage.setItem("expenses", JSON.stringify(expenses));
+		}
+
+		function loadExpenses() {
+			const expenses = getStoredExpenses();
+			const filterMonth = document.getElementById("filter-month").value;
+			const filteredExpenses = filterMonth
+				? expenses.filter(({ month }) => month === filterMonth)
+				: expenses;
+
+			// Sort expenses by amount in descending order
+			filteredExpenses.sort((a, b) => parseFloat(b.amount) - parseFloat(a.amount));
+
+			const expenseList = document.getElementById("expense-list");
+			expenseList.innerHTML = "";
+
+			filteredExpenses.forEach(({ expense, amount, category, month }, index) => {
+				const newRow = createExpenseRow(expense, amount, category, month, index);
+				expenseList.appendChild(newRow);
+			});
+
+			updateTotals();
+		}
+
+		
+		function updateTotals() {
+			const expenses = getStoredExpenses();
+			const filterMonth = document.getElementById("filter-month").value;
+			const filteredExpenses = filterMonth
+				? expenses.filter(({ month }) => month === filterMonth)
+				: expenses;
+
+			const lilopsTotal = filteredExpenses
+				.filter(expense => expense.category === "Lilops")
+				.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
+				
+			const maxiTotal = filteredExpenses
+				.filter(expense => expense.category === "Maxi")
+				.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
+
+			document.getElementById("total-lilops").textContent = `${lilopsTotal.toFixed(2)}€`;
+			document.getElementById("total-maxi").textContent = `${maxiTotal.toFixed(2)}€`;
+		}
+		
+		function getCurrentMonth() {
+			const today = new Date();
+			const year = today.getFullYear();
+			const month = (today.getMonth() + 1).toString().padStart(2, '0');
+			return `${year}-${month}`;
+		}
+		
+		function exportExpenses() {
+		  const expenses = getStoredExpenses();
+		  const data = JSON.stringify(expenses);
+		  const blob = new Blob([data], { type: "application/json" });
+		  const url = URL.createObjectURL(blob);
+		  
+		  const link = document.createElement("a");
+		  link.href = url;
+		  link.download = "expenses_backup.json";
+		  document.body.appendChild(link);
+		  link.click();
+		  document.body.removeChild(link);
+		}
+
+		function importExpenses(file) {
+		  const reader = new FileReader();
+		  reader.onload = function(event) {
+			const data = event.target.result;
+			const expenses = JSON.parse(data);
+			localStorage.setItem("expenses", JSON.stringify(expenses));
+			loadExpenses();
+		  };
+		  reader.readAsText(file);
+		}
+
+
+    </script>
+</body>
+</html>

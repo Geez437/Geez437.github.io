@@ -1,0 +1,12 @@
+@media (max-width: 600px) {
+    .container {
+        width: 95%;
+    }
+
+    nav ul li {
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    /* Additional responsive styling */
+}
