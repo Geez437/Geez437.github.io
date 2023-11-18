@@ -18,6 +18,34 @@
         <div class="content">
             <section id="ancient">
                 <h2>Ancient Strategies</h2>
+				<!-- Buttons for smokes -->
+				<div class="button-container">
+					<button type="button" class="smoke-btn" onclick="openPopup('mid-smoke-video')">Mid Smoke</button>
+					<button type="button" class="smoke-btn" onclick="openPopup('cave-smoke-video')">Cave Smoke</button>
+					<button type="button" class="smoke-btn" onclick="openPopup('donut-smoke-video')">Donut Smoke</button>
+				</div>
+
+				<!-- Popup Video Containers -->
+				<div id="mid-smoke-video" class="popup">
+					<video controls>
+						<source src="videos/ancient/smoke_red.mp4" type="video/mp4">
+						Your browser does not support the video tag.
+					</video>
+				</div>
+
+				<div id="cave-smoke-video" class="popup">
+					<video controls>
+						<source src="videos/ancient/smoke_cave.mp4" type="video/mp4">
+						Your browser does not support the video tag.
+					</video>
+				</div>
+
+				<div id="donut-smoke-video" class="popup">
+					<video controls>
+						<source src="videos/ancient/smoke_donut.mp4" type="video/mp4">
+						Your browser does not support the video tag.
+					</video>
+				</div>
                 <img src="images/ancient/default_step1.jpg" alt="Ancient">
                 <img src="images/ancient/default_step2.jpg" alt="Ancient">
 				<img src="images/ancient/default_step3.jpg" alt="Ancient">
